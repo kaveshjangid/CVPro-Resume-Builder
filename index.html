@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CVPro Resume Builder</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Inter", sans-serif;
+      background: linear-gradient(135deg,#f9f9f9,#ececec);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Abstract background */
+    body::before, body::after {
+      content: "";
+      position: fixed; border-radius: 50%;
+      z-index: 0; opacity: 0.25;
+    }
+    body::before {
+      top: -100px; left: -120px;
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, #ffef9f, transparent 70%);
+    }
+    body::after {
+      bottom: -140px; right: -140px;
+      width: 420px; height: 420px;
+      background: radial-gradient(circle, #ffd166, transparent 70%);
+    }
+    .wrap {
+      max-width: 1200px; margin: auto; padding: 20px;
+      display: grid; grid-template-columns: 420px 1fr; gap: 20px;
+      position: relative; z-index: 1; width: 100%;
+    }
+    .card {
+      background: #ffffffdd;
+      backdrop-filter: blur(8px);
+      padding: 24px;
+      border-radius: 18px;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin: 0 0 20px;
+      font-size: 28px;
+      text-align: center;
+      font-weight: 700;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(90deg,#333,#ffb703);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    label { font-size: 13px; font-weight: 600; margin: 6px 0 4px; display: block; color: #333; }
+    input, textarea {
+      width: 100%; padding: 10px; border: 1px solid #ccc;
+      border-radius: 10px; margin-bottom: 8px;
+      font-size: 14px; font-family: "Inter", sans-serif; background: #fafafa;
+    }
+    textarea { resize: vertical; min-height: 70px; }
+    .btn {
+      background: #ffb703; color: #000; padding: 8px 14px;
+      border: none; border-radius: 10px; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: all 0.3s ease;
+    }
+    .btn:hover { background: #ff9f1c; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .btn.secondary { background: #ccc; color: #333; }
+    .btn.small { font-size: 12px; padding: 6px 10px; }
+    .stack { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .meta { font-size: 13px; color: #666; margin-top: 6px; min-height: 20px; }
+    /* Resume Styling */
+    .resume {
+      font-size: 14px; line-height: 1.7; color: #111;
+      background: linear-gradient(135deg,#fffbe0,#fff9c4);
+      border-radius: 16px; padding: 24px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      position: relative; overflow: hidden;
+    }
+    /* Background patterns */
+    .resume::before, .resume::after {
+      content: ""; position: absolute; border-radius: 50%; opacity: 0.15;
+    }
+    .resume::before {
+      top: -60px; right: -60px; width: 200px; height: 200px;
+      background: radial-gradient(circle,#ffb703,transparent 70%);
+    }
+    .resume::after {
+      bottom: -80px; left: -80px; width: 220px; height: 220px;
+      background: radial-gradient(circle,#ff9f1c,transparent 70%);
+    }
+    .resume-header {
+      display: flex; align-items: center; gap: 16px;
+      background: #ffb703; color: black;
+      padding: 16px; border-radius: 14px; margin-bottom: 18px;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .resume-photo { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid #000; }
+    .resume-header-text h2 { margin: 0; font-size: 22px; font-family: "Poppins", sans-serif; }
+    .resume-header-text p { margin: 4px 0; font-size: 13px; color: #222; }
+    .resume-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+    .resume-section {
+      margin-bottom: 16px; padding: 10px;
+      border-radius: 10px; background: #fff3cd;
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .resume-section h3 {
+      margin: 0 0 8px; font-size: 15px; background: #ffe066;
+      padding: 6px 10px; border-radius: 8px; color: #000;
+      font-weight: 600; font-family: "Poppins", sans-serif;
+    }
+    hr { border: none; border-top: 1px solid #e0c97f; margin: 14px 0; }
+    .enhanced-text { font-family: "Poppins", sans-serif; font-size: 15px; background: #fff8dc; padding: 6px; border-radius: 6px; }
+    footer { text-align: center; font-size: 13px; color: #555; padding: 20px 10px; margin-top: auto; }
+    footer span { display: block; margin: 3px 0; }
+    @media (max-width: 900px) {
+      .wrap { grid-template-columns: 1fr; }
+      .resume-grid { grid-template-columns: 1fr; }
+      .resume-header { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- Form -->
+    <section class="card">
+      <h1>CVPro Resume Builder</h1>
+      <label>Upload Photo</label><input id="photo" type="file" accept="image/*" />
+      <label>Full Name</label><input id="name" placeholder="Jane Doe" />
+      <label>Email</label><input id="email" placeholder="jane@domain.com" />
+      <label>Phone</label><input id="phone" placeholder="+1 555 123 4567" />
+      <label>LinkedIn / Portfolio</label><input id="linkedin" placeholder="linkedin.com/in/janedoe" />
+
+      <label>Summary</label>
+      <div class="stack">
+        <textarea id="summary"></textarea>
+        <button class="btn small" type="button" onclick="enhanceField('summary','status-summary')">✨ Enhance</button>
+      </div>
+      <div class="meta" id="status-summary"></div>
+
+      <label>Experience</label>
+      <div class="stack">
+        <textarea id="experience"></textarea>
+        <button class="btn small" type="button" onclick="enhanceField('experience','status-exp')">✨ Enhance</button>
+      </div>
+      <div class="meta" id="status-exp"></div>
+
+      <label>Projects</label>
+      <div class="stack">
+        <textarea id="projects"></textarea>
+        <button class="btn small" type="button" onclick="enhanceField('projects','status-proj')">✨ Enhance</button>
+      </div>
+      <div class="meta" id="status-proj"></div>
+
+      <label>Skills</label><input id="skills" />
+      <label>Education</label><textarea id="education"></textarea>
+
+      <label>Job Description (for ATS)</label>
+      <div class="stack">
+        <textarea id="job-description"></textarea>
+        <button class="btn small" type="button" onclick="enhanceField('job-description','status-jd')">✨ Enhance</button>
+      </div>
+      <div class="meta" id="status-jd"></div>
+
+      <div class="stack" style="margin-top: 20px;">
+        <button class="btn" onclick="generateResume()">Generate Resume</button>
+        <button class="btn secondary" onclick="downloadPDF()">Download PDF</button>
+      </div>
+      <div class="meta" id="status"></div>
+    </section>
+
+    <!-- Preview -->
+    <section class="card">
+      <div class="resume" id="resume-preview"></div>
+    </section>
+  </div>
+
+  <footer>
+    <span>Copyright © BrandifyX 2025 — All Rights Reserved</span>
+    <span>Built by BrandifyX with ❤️</span>
+    <span>Enquiry Email - kaveshjangid456@gmail.com</span>
+  </footer>
+
+  <script>
+    const GEMINI_KEY = "AIzaSyDXPwBpxrwOIrmMZ_YGJM65-zkZgQNVQx4";
+    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
+    let uploadedPhoto = "";
+
+    document.getElementById("photo").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => { uploadedPhoto = reader.result; };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    async function enhanceField(fieldId, statusId) {
+      const text = document.getElementById(fieldId).value.trim();
+      if (!text) { alert("Please write something first."); return; }
+      document.getElementById(statusId).innerText = "⏳ Enhancing... please wait 2–3 mins";
+      try {
+        const res = await fetch(GEMINI_URL, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: `Rewrite and enhance this for a professional resume. Keep it concise, modern, and ATS-friendly:\n\n${text}` }] }]
+          })
+        });
+        const json = await res.json();
+        const aiText = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (aiText) {
+          document.getElementById(fieldId).value = aiText;
+          document.getElementById(fieldId).classList.add("enhanced-text");
+          document.getElementById(statusId).innerText = "✨ Enhanced!";
+        } else {
+          document.getElementById(statusId).innerText = "No enhancement returned.";
+        }
+      } catch (e) {
+        console.error("Enhance error:", e);
+        document.getElementById(statusId).innerText = "❌ Error enhancing.";
+      }
+    }
+
+    function generateResume() {
+      const data = {
+        name: get("name"), email: get("email"), phone: get("phone"),
+        linkedin: get("linkedin"), summary: get("summary"),
+        experience: get("experience"), projects: get("projects"),
+        skills: get("skills"), education: get("education"),
+        jd: get("job-description")
+      };
+      if (!data.name || !data.email || !data.experience || !data.skills) {
+        alert("Fill at least Name, Email, Experience & Skills."); return;
+      }
+      setStatus("Generating resume...");
+      renderStyledResume(data);
+      setStatus("Done!");
+    }
+
+    function renderStyledResume(data) {
+      document.getElementById("resume-preview").innerHTML = `
+        <div class="resume-header">
+          ${uploadedPhoto ? `<img src="${uploadedPhoto}" class="resume-photo"/>` : ""}
+          <div class="resume-header-text">
+            <h2>${data.name}</h2>
+            <p>${data.email} | ${data.phone} | ${data.linkedin}</p>
+          </div>
+        </div>
+        <div class="resume-grid">
+          <div>
+            <div class="resume-section"><h3>Skills</h3><p>${data.skills}</p></div><hr/>
+            <div class="resume-section"><h3>Education</h3><p>${data.education}</p></div><hr/>
+            <div class="resume-section"><h3>Projects</h3><p>${data.projects}</p></div>
+          </div>
+          <div>
+            <div class="resume-section"><h3>Summary</h3><p>${data.summary}</p></div><hr/>
+            <div class="resume-section"><h3>Experience</h3><p>${data.experience}</p></div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const element = document.getElementById("resume-preview");
+      const canvas = await html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("CVPro_Resume.pdf");
+    }
+
+    function get(id){ return document.getElementById(id).value.trim(); }
+    function setStatus(msg){ document.getElementById("status").innerText = msg; }
+  </script>
+</body>
+</html>
